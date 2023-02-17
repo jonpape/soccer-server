@@ -3,15 +3,15 @@
 
 There are four routes working right now:
 
-###http://localhost:8080/random/
+### http://localhost:8080/random/
 
 connection.query(`
     SELECT scorer 
     FROM goalscorer 
     ORDER BY RAND() 
-    LIMIT 1;
+    LIMIT 1;`
 
-###Top teams by wins
+### Top teams by wins
 http://localhost:8080/top_teams
 
 connection.query(`
@@ -32,9 +32,9 @@ connection.query(`
   FROM cte1 LEFT JOIN cte2
   ON cte1.Team = cte2.winner
   GROUP BY Team
-  ORDER BY Wins DESC LIMIT 10;
+  ORDER BY Wins DESC LIMIT 10;`
 
-###All matches for a team (limit 100)
+### All matches for a team (limit 100)
 http://localhost:8080/team/[Team] 
 (Replace spaces with underscore)
 
@@ -45,9 +45,9 @@ const teamName = req.params.team_name;
   FROM matches
   WHERE away_team = '${formattedText}'
   OR home_team = '${formattedText}'
-  LIMIT 100; 
+  LIMIT 100;`
 
-###Top scorer
+### Top scorer
 http://localhost:8080/top_scorer
 
 connection.query(`
