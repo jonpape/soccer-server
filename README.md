@@ -1,5 +1,13 @@
 # cis5500-project-server
 
+I'm going to apologize ahead of time because I have not yet updated the comments in the files.
+
+Below is the routes I have been working on and they are connected to the AWS RDS.
+
+Since there is not scorer_id or team_id, I plan on adding a '_' to the names where there are spaces and removing the '_' prior to making the query. 
+Example: 'South Korea' would be http://localhost:8080/team/South_Korea
+
+It might be better if the names / teams are an encoded URL format.
 
 There are four routes working right now:
 
