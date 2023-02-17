@@ -11,7 +11,8 @@ It might be better if the names / teams are an encoded URL format.
 
 There are four routes working right now:
 
-### http://localhost:8080/random/
+### Random
+http://localhost:8080/random/
 
 connection.query(`
     SELECT scorer 
