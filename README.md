@@ -65,7 +65,7 @@ connection.query(`
       FROM goalscorer 
       GROUP BY scorer 
       ORDER BY goals 
-      DESC limit ${pageSize};
+      DESC limit ${pageSize};`
 
 
 
