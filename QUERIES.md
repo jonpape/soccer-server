@@ -17,11 +17,11 @@ connection.query(`
     FROM matches
     ORDER BY RAND()
     LIMIT 1)
-  SELECT Away_team, Home_team, Away_score, Home_score, Date
+  SELECT Away_team, Home_team, Away_score, Home_score, date AS Date
   FROM matches JOIN cte ON cte.team1 = matches.away_team
   WHERE (Away_team = team1 AND Home_team = team2) OR (Away_team = team2 AND Home_team = team1)
     UNION
-  SELECT Away_team, Home_team, Away_score, Home_score, Date
+  SELECT Away_team, Home_team, Away_score, Home_score, date AS Date
   FROM matches JOIN cte ON cte.team1 = matches.home_team
   WHERE (Away_team = team1 AND Home_team = team2) OR (Away_team = team2 AND Home_team = team1)
     ORDER By date;`)
@@ -114,7 +114,7 @@ connection.query(`
   ON cte1.Team = cte3.team_name
   GROUP BY Team
   ORDER BY Total_Games DESC LIMIT 10;)
-    ```
+```
 ## Win percentage per team for a given year
 http://localhost:8080/percentage_year/[Team] 
 (Replace spaces with underscore)
@@ -157,10 +157,10 @@ WITH cte1 AS (
     GROUP BY Year, Team
     ORDER BY Year ASC, Win_Percentage DESC
     LIMIT 100;)
-    ```
+  ```
 
-    ## Teams by year
-    http://localhost:8080/teams_by_year
+## Teams by year
+http://localhost:8080/teams_by_year
     ```
     connection.query(`
   WITH cte1 AS (
@@ -199,7 +199,8 @@ WITH cte1 AS (
   GROUP BY Year, Team
   ORDER BY Year ASC, Win_Percentage DESC
   LIMIT 100;)
-  ```
+    ```
+
 ## Teams by decade
 http://localhost:8080/teams_by_decade
 ```connection.query(`

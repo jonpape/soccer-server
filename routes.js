@@ -67,11 +67,11 @@ const random_teams = async function(req, res) {
     FROM matches
     ORDER BY RAND()
     LIMIT 1)
-  SELECT Away_team, Home_team, Away_score, Home_score, Date
+  SELECT Away_team, Home_team, Away_score, Home_score, date AS Date
   FROM matches JOIN cte ON cte.team1 = matches.away_team
   WHERE (Away_team = team1 AND Home_team = team2) OR (Away_team = team2 AND Home_team = team1)
     UNION
-  SELECT Away_team, Home_team, Away_score, Home_score, Date
+  SELECT Away_team, Home_team, Away_score, Home_score, date AS Date
   FROM matches JOIN cte ON cte.team1 = matches.home_team
   WHERE (Away_team = team1 AND Home_team = team2) OR (Away_team = team2 AND Home_team = team1)
     ORDER By date;
