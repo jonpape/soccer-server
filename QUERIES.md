@@ -161,7 +161,8 @@ WITH cte1 AS (
 
 ## Teams by year
 http://localhost:8080/teams_by_year
-    ```
+
+```
     connection.query(`
   WITH cte1 AS (
       SELECT DISTINCT home_team AS Team, YEAR(date) AS Year FROM matches
@@ -199,11 +200,13 @@ http://localhost:8080/teams_by_year
   GROUP BY Year, Team
   ORDER BY Year ASC, Win_Percentage DESC
   LIMIT 100;)
-    ```
+```
 
 ## Teams by decade
 http://localhost:8080/teams_by_decade
-```connection.query(`
+
+```
+connection.query(`
   WITH cte1 AS (
     SELECT DISTINCT home_team AS Team,
                     CONCAT(FLOOR(YEAR(date) / 10) * 10, '-', FLOOR(YEAR(date) / 10) * 10 + 9) AS Decade
@@ -247,5 +250,5 @@ http://localhost:8080/teams_by_decade
   GROUP BY Decade, Team
   ORDER BY Decade ASC, Win_Percentage DESC
   LIMIT 100;)
-  ```
+```
 
