@@ -1,8 +1,8 @@
 {
-  "rds_host": "soccerfy.cm4zazra46hn.us-west-2.rds.amazonaws.com",
+  "rds_host": "cis5500-west.cgkxjt5rdboe.us-west-1.rds.amazonaws.com",
   "rds_port": "3306",
-  "rds_user": "jonpape",
-  "rds_password": "weakpass123",
+  "rds_user": "cis5500",
+  "rds_password": "weakpass123!",
   "rds_db": "SOCCERFY",
   "server_host": "localhost",
   "server_port": "8080"
