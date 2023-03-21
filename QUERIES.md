@@ -49,7 +49,7 @@ connection.query(`
   FROM cte1 LEFT JOIN cte2
   ON cte1.Team = cte2.winner
   GROUP BY Team
-  ORDER BY Wins DESC LIMIT 10;`
+  ORDER BY Wins DESC LIMIT 10;`)
 ```
 ## All matches for a team (limit 100)
 http://localhost:8080/team/[Team] 
