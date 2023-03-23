@@ -252,3 +252,24 @@ connection.query(`
   LIMIT 100;)
 ```
 
+## Implements a route that given a team_id, returns the team player's name, nationality that have higher than the average player rating, ordered by rating
+```
+  const teamName = req.params.team_name;
+  const formattedText = teamName ? teamName.replace(/_/g, ' ') : '';
+    connection.query(`
+    SELECT full_name AS name, overall_rating AS rating, height_cm AS height, weight_kgs AS weight
+    FROM players
+    INNER JOIN team ON players.national_team = team.team_name
+    WHERE national_team = '${formattedText}' AND overall_rating > (SELECT AVG(overall_rating) FROM players)
+    ORDER BY overall_rating
+    LIMIT 100;`
+```
+## Implements a route that returns the top scorer by player name, nationality, overall_rating, position, and count
+```
+SELECT full_name, nationality, overall_rating, positions, COUNT(full_name) AS num_goals
+  FROM players
+  INNER JOIN goalscorer ON goalscorer.scorer = players.full_name
+  GROUP BY full_name
+ ORDER BY num_goals desc
+
+
