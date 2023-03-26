@@ -273,3 +273,136 @@ SELECT full_name, nationality, overall_rating, positions, COUNT(full_name) AS nu
  ORDER BY num_goals desc
 
 
+
+
+
+```
+##  Implements a route that returns the winning rate for a group of countries with specified indicator in the specified year range
+```
+  const year_low = req.query.year_low ?? 1960;
+  const year_high = req.query.year_high ?? 2021;
+  const wdi_serie = req.query.serie ?? 'NY.GDP.PCAP.CD';
+  const page = req.query.page ?? 1;
+  const page_size = req.query.page_size ?? 10;
+  
+
+  connection.query(`
+    WITH cte AS(
+    SELECT  Country.name AS country_name, AVG(estimates) as indicator_value
+    FROM WDI_Data wd JOIN Country ON wd.country_code = Country.alpha3
+    WHERE
+        series_code = ${wdi_serie}
+        AND
+        (year BETWEEN ${year_low} AND ${year_high})
+    GROUP BY country_name
+    ),
+
+
+    cte1 AS (
+      SELECT DISTINCT home_team AS Team, YEAR(date) AS Year FROM matches
+      UNION
+      SELECT DISTINCT away_team AS Team, YEAR(date) AS Year FROM matches),
+
+    cte2 AS (
+      SELECT YEAR(date) as Year,
+        CASE
+          WHEN home_score > away_score THEN home_team
+          WHEN home_score < away_score THEN away_team
+          ELSE 'Tie'
+        END AS winner
+      FROM matches
+      WHERE YEAR(date) BETWEEN ${year_low} AND ${year_high}),
+
+    cte3 AS (
+      SELECT
+        team_name,
+        COUNT(*) AS total_matches,
+        Year
+      FROM
+        (SELECT home_team AS team_name, YEAR(date) AS Year 
+        FROM matches
+        WHERE YEAR(date) BETWEEN ${year_low} AND ${year_high}
+        
+        UNION ALL
+        
+        SELECT away_team AS team_name, YEAR(date) AS Year 
+        FROM matches
+        WHERE YEAR(date) BETWEEN ${year_low} AND ${year_high}) AS subquery
+
+      GROUP BY
+        team_name, year
+    )
+    
+    SELECT DISTINCT
+      Team,
+      indicator_value AS Indicator_Value,
+      COUNT(winner) AS Wins,
+      SUM(total_matches) AS Total_Games,
+      COUNT(winner) / SUM(total_matches) AS Win_Percentage
+    FROM cte1 LEFT JOIN cte2
+    ON cte1.Team = cte2.winner and cte1.Year = cte2.Year
+    JOIN cte3
+    ON cte1.Team = cte3.team_name and cte1.Year = cte3.Year
+    JOIN cte
+    ON cte1.Team = cte.country_name
+    GROUP BY Team
+    ORDER BY cte.indicator_value DESC, Win_Percentage DESC
+    LIMIT ${page_size} OFFSET ${ (page-1) * page_size}; `
+
+
+
+```
+##  Implements a route that returns the population, population growth rate, GDP, GDP growth rate of a given country, calculated from averages of up to 10 years of latest available data(Country Card) 
+```
+
+  const country = req.params.country_name;
+  
+    connection.query(`
+    WITH CTE AS(
+    SELECT series_name, series_code, estimates, year
+    FROM WDI_Data wd JOIN Country ON wd.country_code = Country.alpha3
+    WHERE Country.name = ${country}
+    )
+
+    (SELECT 'region' AS info, CONCAT(region, '/', intermediate_region) AS estimates
+    FROM Country
+    WHERE Country.name = ${country})
+
+    UNION
+
+    (SELECT 'country_code' AS info, Country.alpha3 AS estimates
+    FROM Country
+    WHERE Country.name = ${country})
+
+    UNION
+
+    (SELECT 'population' AS info, FLOOR(AVG(estimates)) AS estimates
+    FROM CTE
+    WHERE series_code = 'SP.POP.TOTL'
+    ORDER BY year DESC
+    LIMIT 10)
+
+    UNION
+
+    (SELECT 'population growth (annual %)' AS info, AVG(estimates) AS estimates
+    FROM CTE
+    WHERE series_code = 'SP.POP.GROW'
+    ORDER BY year DESC
+    LIMIT 10)
+
+    UNION
+
+    (SELECT 'GDP per capita(US$)' AS info, FLOOR(AVG(estimates)) AS estimates
+    FROM CTE
+    WHERE series_code = 'NY.GDP.PCAP.CD'
+    ORDER BY year DESC
+    LIMIT 10)
+
+    UNION
+
+    (SELECT 'GDP growth (annual %)' AS info, AVG(estimates) AS estimates
+    FROM CTE
+    WHERE series_code = 'NY.GDP.MKTP.KD.'
+    ORDER BY year DESC
+    LIMIT 10)
+    ;`
