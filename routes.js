@@ -424,14 +424,68 @@ const teams_by_decade = async function(req, res) {
 }
 
 // Route 9: GET /search_albums
-const search_songs = async function(req, res) {
-  // TODO (TASK 12): return all songs that match the given search query with parameters defaulted to those specified in API spec ordered by title (ascending)
-  // Some default parameters have been provided for you, but you will need to fill in the rest
-  const title = req.query.title ?? '';
-  const durationLow = req.query.duration_low ?? 60;
-  const durationHigh = req.query.duration_high ?? 660;
+const wdi_info = async function(req, res) {
 
-  res.json([]); // replace this with your implementation
+  const countryname = req.query.countryname ?? 'United States'; //Drop down list given to User
+  const seriesName = req.query.seriesName ?? 'GDP (current US$)'; //Drop down list given to User
+  const yearLow = req.query.yearLow ?? 2000; //Slider
+  const yearHigh = req.query.yearHigh ?? 2005; //Slider
+
+  connection.query(`
+  with country as (
+    select distinct home_team as countryname from matches
+        union
+    select distinct away_team from matches
+    )
+    , WDIInfo as
+    (
+    select c.countryname, wd.year, wd.series_name, wd.estimates, ifnull(ws.short_definition, 'No Explanation') indicator_definition
+    from country c
+    join WDI_Data wd
+        on c.countryname = wd.country_name
+    join WDI_Series ws
+        on ws.indicator_Name = wd.series_name
+    where wd.year between ${yearLow} and ${yearHigh}
+    and c.countryname = '${countryname}'
+    and wd.series_name = '${seriesName}'
+    group by wd.country_name, year, wd.series_name
+    )
+    , WinLossTieInfo AS (
+    SELECT
+    t.country_name
+    ,year(r.date) as year
+    ,count(*) as total_played
+    ,SUM(CASE
+        WHEN r.home_team = t.country_name AND home_score > away_score THEN 1
+                WHEN r.away_team = t.country_name AND home_score < away_score THEN 1
+                ELSE 0
+                END) AS Wins
+    ,SUM(CASE
+        WHEN r.home_team = t.country_name AND home_score < away_score THEN 1
+                WHEN r.away_team = t.country_name AND home_score > away_score THEN 1
+                ELSE 0
+                END) AS losses
+    ,SUM(CASE WHEN home_score = away_score then 1 else 0 end) as Ties
+    FROM matches r
+    INNER JOIN Country_v2 t
+        ON t.country_name = r.home_team OR t.country_name = r.away_team
+    where year(r.date) between ${yearLow} and ${yearHigh}
+    and country_name = '${seriesName}'
+    GROUP BY country_name, year(r.date)
+    )
+    select wdi.countryname, wdi.year, series_name, estimates, indicator_definition, Wins/total_played as WinRate
+    from WDIInfo wdi
+    left join WinLossTieInfo wlt
+        on wdi.countryname = wlt.country_name
+        and wdi.year = wlt.year;
+    `, (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    }); // replace this with your implementation
 }
 
 module.exports = {
@@ -448,5 +502,5 @@ module.exports = {
   percentage_year, // by team
   teams_by_year, // all teams
   teams_by_decade, // all teams
-  search_songs,
+  wdi_info,
 }

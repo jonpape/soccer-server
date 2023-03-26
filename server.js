@@ -23,6 +23,7 @@ app.get('/winning_percentage', routes.winning_percentage);
 app.get('/percentage_year/:team_name', routes.percentage_year);
 app.get('/teams_by_year', routes.teams_by_year);
 app.get('/teams_by_decade', routes.teams_by_decade);
+app.get('/wdi_info', routes.wdi_info);
 //app.get('/search_songs', routes.search_songs);
 
 app.listen(config.server_port, () => {
