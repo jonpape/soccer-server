@@ -406,3 +406,115 @@ SELECT full_name, nationality, overall_rating, positions, COUNT(full_name) AS nu
     ORDER BY year DESC
     LIMIT 10)
     ;`
+    
+```
+users are given list of CountryName, ,Series_Name and Year as Slider and we are taking this as input to show information
+And then compare winrate of the year for that team(country) which asoociated series and winrate is correlated
+ex) if GDP estimates high then win rate on that Team is also high?
+
+```
+const countryname = req.query.countryname ?? 'United States'; //Drop down list given to User
+  const seriesName = req.query.seriesName ?? 'GDP (current US$)'; //Drop down list given to User
+  const yearLow = req.query.yearLow ?? 2000; //Slider
+  const yearHigh = req.query.yearHigh ?? 2005; //Slider
+
+  connection.query(`
+  with country as (
+    select distinct home_team as countryname from matches
+        union
+    select distinct away_team from matches
+    )
+    , WDIInfo as
+    (
+    select c.countryname, wd.year, wd.series_name, wd.estimates, ifnull(ws.short_definition, 'No Explanation') indicator_definition
+    from country c
+    join WDI_Data wd
+        on c.countryname = wd.country_name
+    join WDI_Series ws
+        on ws.indicator_Name = wd.series_name
+    where wd.year between ${yearLow} and ${yearHigh}
+    and c.countryname = '${countryname}'
+    and wd.series_name = '${seriesName}'
+    group by wd.country_name, year, wd.series_name
+    )
+    , WinLossTieInfo AS (
+    SELECT
+    t.country_name
+    ,year(r.date) as year
+    ,count(*) as total_played
+    ,SUM(CASE
+        WHEN r.home_team = t.country_name AND home_score > away_score THEN 1
+                WHEN r.away_team = t.country_name AND home_score < away_score THEN 1
+                ELSE 0
+                END) AS Wins
+    ,SUM(CASE
+        WHEN r.home_team = t.country_name AND home_score < away_score THEN 1
+                WHEN r.away_team = t.country_name AND home_score > away_score THEN 1
+                ELSE 0
+                END) AS losses
+    ,SUM(CASE WHEN home_score = away_score then 1 else 0 end) as Ties
+    FROM matches r
+    INNER JOIN Country_v2 t
+        ON t.country_name = r.home_team OR t.country_name = r.away_team
+    where year(r.date) between ${yearLow} and ${yearHigh}
+    and country_name = '${seriesName}'
+    GROUP BY country_name, year(r.date)
+    )
+    select wdi.countryname, wdi.year, series_name, estimates, indicator_definition, Wins/total_played as WinRate
+    from WDIInfo wdi
+    left join WinLossTieInfo wlt
+        on wdi.countryname = wlt.country_name
+        and wdi.year = wlt.year;
+    `
+    
+    
+```
+##  To see how many home team goals and away goals scored per Team on that year
+```
+select year(m.date)
+,SUM(CASE WHEN m.home_team = {CountryName} THEN home_score  END) AS home_goals
+,SUM(CASE WHEN m.away_team = {CountryName} THEN away_score  END) AS away_goals
+from matches m
+left join Country_v2 c1 on m.home_team = c1.country_name
+left join Country_v2 c2 on m.away_team = c2.country_name
+where m.home_team = {CountryName} or m.away_team = {CountryName}
+group by year(m.date);
+
+
+# Example Query
+# select year(m.date)
+# ,ifnull(SUM(CASE WHEN m.home_team = 'South Korea' THEN home_score  END),0) AS home_goals
+# ,ifnull(SUM(CASE WHEN m.away_team = 'South Korea' THEN away_score  END),0) AS away_goals
+# from matches m
+# left join Country c1 on m.home_team = c1.name
+# left join Country c2 on m.away_team = c2.name
+# where m.home_team = 'South Korea' or m.away_team = 'South Korea'
+# group by year(m.date)
+
+```
+##  Calculating game points based on Win: 3points Tie:1poin Loss:0point
+```
+WITH CTE AS (
+    SELECT
+    t.name
+    ,count(*) as total_played
+    ,SUM(CASE
+        WHEN r.home_team = t.name AND home_score > away_score THEN 1
+                WHEN r.away_team = t.name AND home_score < away_score THEN 1
+                ELSE 0
+                END) AS Wins
+    ,SUM(CASE
+        WHEN r.home_team = t.name AND home_score < away_score THEN 1
+                WHEN r.away_team = t.name AND home_score > away_score THEN 1
+                ELSE 0
+                END) AS losses
+    ,SUM(CASE WHEN home_score = away_score then 1 else 0 end) as Ties
+    FROM matches r
+    INNER JOIN Country t
+        ON t.name = r.home_team OR t.name = r.away_team
+    GROUP BY name
+    )
+# --calculate points
+SELECT *, (3 * Wins + 1 * Ties) as points, Wins/total_played
+FROM CTE
+order by points desc
