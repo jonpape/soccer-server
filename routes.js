@@ -108,25 +108,61 @@ const scorer = async function(req, res) {
   });
 }
 
-// Route 4: GET /team/:team_name
+// Route 4: GET /team
 const team = async function(req, res) {
-  // TODO (TASK 5): implement a route that given a album_id, returns all information about the album
-  const teamName = req.params.team_name;
-  const formattedText = teamName ? teamName.replace(/_/g, ' ') : '';
-  connection.query(`
-  SELECT *
-  FROM matches
-  WHERE away_team = '${formattedText}'
-  OR home_team = '${formattedText}'
-  LIMIT 100; 
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+  // TODO (TASK 5): implement a route that given country, returns match info for the team.
+  if (!req.query.team ) {
+    connection.query(`
+        SELECT DISTINCT away_team AS team_name
+        FROM matches
+        UNION DISTINCT
+        SELECT DISTINCT home_team AS team_name
+        FROM matches
+        ORDER BY team_name; 
+        `, (err, data) => {
+          if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+          } else {
+            res.json(data);
+          }
+        });
+  } else if (req.query.team  === 'random') {
+    connection.query(`
+        SELECT DISTINCT away_team AS team_name
+        FROM matches
+        UNION DISTINCT
+        SELECT DISTINCT home_team AS team_name
+        FROM matches
+        ORDER BY RAND()
+        LIMIT 1;
+        `, (err, data) => {
+          if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+          } else {
+            res.json(data);
+          }
+        });
+  } else {
+    const teamName = req.query.team;
+    const formattedText = teamName ? teamName.replace(/_/g, ' ') : '';
+    connection.query(`
+        SELECT *
+        FROM matches
+        WHERE away_team = '${formattedText}'
+        OR home_team = '${formattedText}'
+        LIMIT 1000; 
+      `, (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
+  }
+  return;
 }
 
 // Route 5: GET /albums
@@ -261,10 +297,10 @@ const winning_percentage = async function(req, res) {
     });
 }
 
-// Route 10: GET /percentage_year/:team_name
+// Route 10: GET /percentage_year
 const percentage_year = async function(req, res) {
   // Win Percentage = (Number of wins) / (Number of games played)
-  const teamName = req.params.team_name;
+  const teamName = req.query.team ?? 'United_States'
   console.log(teamName)
   const formattedText = teamName ? teamName.replace(/_/g, ' ') : '';
 
@@ -319,6 +355,9 @@ const percentage_year = async function(req, res) {
 // Route 11: GET /teams_by_year
 const teams_by_year = async function(req, res) {
   // Win Percentage = (Number of wins) / (Number of games played)
+  const teamName = req.query.team ?? 'United_States'
+  console.log(teamName)
+  const formattedText = teamName ? teamName.replace(/_/g, ' ') : '';
   connection.query(`
   WITH cte1 AS (
       SELECT DISTINCT home_team AS Team, YEAR(date) AS Year FROM matches
@@ -353,9 +392,10 @@ const teams_by_year = async function(req, res) {
   ON cte1.Team = cte2.winner and cte1.Year = cte2.Year
   JOIN cte3
   ON cte1.Team = cte3.team_name and cte1.Year = cte3.Year
+  WHERE Team = '${formattedText}'
   GROUP BY Year, Team
   ORDER BY Year ASC, Win_Percentage DESC
-  LIMIT 100;
+  LIMIT 1000;
     `, (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
@@ -369,6 +409,9 @@ const teams_by_year = async function(req, res) {
 // Route 12: GET /teams_by_decade
 const teams_by_decade = async function(req, res) {
   // Win Percentage = (Number of wins) / (Number of games played)
+  const teamName = req.query.team ?? 'United_States'
+  console.log(teamName)
+  const formattedText = teamName ? teamName.replace(/_/g, ' ') : '';
   connection.query(`
   WITH cte1 AS (
     SELECT DISTINCT home_team AS Team,
@@ -409,10 +452,10 @@ const teams_by_decade = async function(req, res) {
   ON cte1.Team = cte2.winner and cte1.Decade = cte2.Decade
   JOIN cte3
   ON cte1.Team = cte3.team_name and cte1.Decade = cte3.Decade
-  #WHERE Team = 'England'
+  WHERE Team = '${formattedText}'
   GROUP BY Decade, Team
   ORDER BY Decade ASC, Win_Percentage DESC
-  LIMIT 100;
+  LIMIT 1000;
     `, (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
@@ -500,7 +543,7 @@ module.exports = {
   top_teams,
   winning_percentage,
   percentage_year, // by team
-  teams_by_year, // all teams
-  teams_by_decade, // all teams
+  teams_by_year, // by team
+  teams_by_decade, // by team
   wdi_info,
 }
