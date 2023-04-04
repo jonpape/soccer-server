@@ -4,6 +4,6 @@
   "rds_user": "cis5500",
   "rds_password": "weakpass123!",
   "rds_db": "SOCCERFY",
-  "server_host": "localhost",
+  "server_host": "34.217.64.79",
   "server_port": "8080"
 }
