@@ -19,7 +19,7 @@ connection.connect((err) => err && console.log(err));
 // Route 1: GET /author/:type
 const author = async function(req, res) {
   // TODO (TASK 1): replace the values of name and pennKey with your own
-  const name = 'Jon Pape';
+  const name = 'Jonathan  Pape';
   const pennKey = 'jonpape';
 
   // checks the value of type the request parameters
@@ -53,7 +53,7 @@ const random = async function(req, res) {
       // Here, we return results of the query as an object, keeping only relevant data
       res.json({
         //soccer name: data[0].soccer_name,
-        scorer: data[0].scorer,
+        scorer: data.scorer,
       });
     }
   });
@@ -150,8 +150,8 @@ const team = async function(req, res) {
     connection.query(`
         SELECT *
         FROM matches
-        WHERE away_team = '${formattedText}'
-        OR home_team = '${formattedText}'
+        WHERE away_team LIKE '%${formattedText}%'
+        OR home_team = '%${formattedText}%'
         LIMIT 1000; 
       `, (err, data) => {
       if (err || data.length === 0) {
@@ -165,18 +165,164 @@ const team = async function(req, res) {
   return;
 }
 
-// Route 5: GET /albums
-const albums = async function(req, res) {
-  // TODO (TASK 6): implement a route that returns all albums ordered by release date (descending)
-  // Note that in this case you will need to return multiple albums, so you will need to return an array of objects
-  res.json([]); // replace this with your implementation
+// Route 4: GET /player
+const player = async function(req, res) {
+  // TODO (TASK 5): implement a route that given country, returns match info for the team.
+  if (req.query.nationality ) {
+    const nationality = req.query.nationality;
+    const formattedText = nationality ? nationality.replace(/_/g, ' ') : '';
+    connection.query(`
+        SELECT name,
+            full_name,
+            birth_date,
+            height_cm,
+            weight_kgs,
+            positions,
+            nationality,
+            CONCAT('/team?team=', REPLACE(nationality, ' ', '_')) AS team_link,
+            overall_rating,
+            preferred_foot,
+            international_reputation_1_5 as reputation,
+            club_team,
+            club_position,
+            club_jersey_number,
+            national_team,
+            national_jersey_number,
+            national_team_position,
+            traits,
+            wikipedia_name,
+            wikipedia_link,
+            wikipedia_image
+        FROM players
+        WHERE NOT REGEXP_LIKE(full_name, '^[A-Za-z]+$')
+        AND nationality like '${formattedText}'
+        ORDER BY overall_rating DESC, full_name ASC, birth_date ASC
+        LIMIT 1000;
+          `, (err, data) => {
+            if (err || data.length === 0) {
+              console.log(err);
+              res.json({});
+            } else {
+              res.json(data);
+            }
+          });
+
+
+        } else if (!req.query.player ) {
+    connection.query(`
+    SELECT name,
+          full_name,
+          birth_date,
+          height_cm,
+          weight_kgs,
+          positions,
+          nationality,
+          CONCAT('/team?team=', REPLACE(nationality, ' ', '_')) AS team_link,
+          overall_rating,
+          preferred_foot,
+          international_reputation_1_5 as reputation,
+          club_team,
+          club_position,
+          club_jersey_number,
+          national_team,
+          national_jersey_number,
+          national_team_position,
+          traits,
+          wikipedia_name,
+          wikipedia_link,
+          wikipedia_image
+      FROM players
+      WHERE NOT REGEXP_LIKE(full_name, '^[A-Za-z]+$')
+      AND nationality like '%'
+      ORDER BY overall_rating DESC, full_name ASC, birth_date ASC
+      LIMIT 1000;
+        `, (err, data) => {
+          if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+          } else {
+            res.json(data);
+          }
+        });
+        //Get a random player
+  } else if (req.query.player  === 'random') {
+    connection.query(`
+            SELECT name,
+            full_name,
+            birth_date,
+            height_cm,
+            weight_kgs,
+            positions,
+            nationality,
+            CONCAT('/team?team=', REPLACE(nationality, ' ', '_')) AS team_link,
+            overall_rating,
+            preferred_foot,
+            international_reputation_1_5 as reputation,
+            club_team,
+            club_position,
+            club_jersey_number,
+            national_team,
+            national_jersey_number,
+            national_team_position,
+            traits,
+            wikipedia_name,
+            wikipedia_link,
+            wikipedia_image
+        FROM players
+        WHERE name like '
+        AND nationality like '%'
+        ORDER BY RAND()
+        LIMIT 1;
+        `, (err, data) => {
+          if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+          } else {
+            res.json(data);
+          }
+        });
+  } else {
+    const playerName = req.query.name;
+    const formattedText = playerName ? playerName.replace(/_/g, ' ') : '';
+    connection.query(`
+            SELECT name,
+            full_name,
+            birth_date,
+            height_cm,
+            weight_kgs,
+            positions,
+            nationality,
+            CONCAT('/team?team=', REPLACE(nationality, ' ', '_')) AS team_link,
+            overall_rating,
+            preferred_foot,
+            international_reputation_1_5 as reputation,
+            club_team,
+            club_position,
+            club_jersey_number,
+            national_team,
+            national_jersey_number,
+            national_team_position,
+            traits,
+            wikipedia_name,
+            wikipedia_link,
+            wikipedia_image
+        FROM players
+        WHERE name LIKE '%${formattedText}%'
+        AND nationality like '%'
+        LIMIT 1000; 
+      `, (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
+  }
+  return;
 }
 
-// Route 6: GET /album_songs/:album_id
-const album_songs = async function(req, res) {
-  // TODO (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
-  res.json([]); // replace this with your implementation
-}
+
 
 /************************
  * ADVANCED INFO ROUTES *
@@ -466,7 +612,7 @@ const teams_by_decade = async function(req, res) {
     });
 }
 
-// Route 9: GET /search_albums
+// Route 13: GET /wdi_info
 const wdi_info = async function(req, res) {
 
   const countryname = req.query.countryname ?? 'United States'; //Drop down list given to User
@@ -537,8 +683,7 @@ module.exports = {
   random_teams,
   scorer,
   team,
-  albums,
-  album_songs,
+  player,
   top_scorer,
   top_teams,
   winning_percentage,

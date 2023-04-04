@@ -1,7 +1,6 @@
-There are four routes working right now:
-
+# Working Queries
 ## Random
-http://localhost:8080/random/
+http://34.217.64.79:8080/random/
 ```
 connection.query(`
     SELECT scorer 
@@ -10,7 +9,7 @@ connection.query(`
     LIMIT 1;`)
 ```
 ## Matches for Random Teams
-http://localhost:8080/random_teams/
+http://34.217.64.79:8080/random_teams/
 ```
 connection.query(`
   WITH cte AS (SELECT away_team as team1, home_team as team2
@@ -29,7 +28,7 @@ connection.query(`
 
 
 ## Top teams by wins
-http://localhost:8080/top_teams
+http://34.217.64.79:8080/top_teams
 ```
 connection.query(`
   WITH cte1 AS (
@@ -52,9 +51,9 @@ connection.query(`
   ORDER BY Wins DESC LIMIT 10;`)
 ```
 ## All matches for a team (limit 100)
-http://localhost:8080/team/[Team] 
+http://34.217.64.79:8080/team/[Team] 
 (Replace spaces with underscore)
-http://localhost:8080/team/South_Korea
+http://34.217.64.79:8080/team/South_Korea
 
 ```
 const teamName = req.params.team_name;
@@ -67,7 +66,7 @@ const teamName = req.params.team_name;
   LIMIT 100;)
 ```
 ## Top scorer
-http://localhost:8080/top_scorer
+http://34.217.64.79:8080/top_scorer
 ```
 connection.query(`
       SELECT scorer, 
@@ -78,7 +77,7 @@ connection.query(`
       DESC limit ${pageSize};`)
 ```
 ## Win percentage per team
-http://localhost:8080/winning_percentage
+http://34.217.64.79:8080/winning_percentage
 ```
 connection.query(`
   WITH cte1 AS (
@@ -116,9 +115,9 @@ connection.query(`
   ORDER BY Total_Games DESC LIMIT 10;)
 ```
 ## Win percentage per team for a given year
-http://localhost:8080/percentage_year/[Team] 
+http://34.217.64.79:8080/percentage_year/[Team] 
 (Replace spaces with underscore)
-http://localhost:8080/percentage_year/South_Korea
+http://34.217.64.79:8080/percentage_year?team=South_Korea
 ```
 connection.query(`
 WITH cte1 AS (
@@ -160,7 +159,7 @@ WITH cte1 AS (
   ```
 
 ## Teams by year
-http://localhost:8080/teams_by_year
+http://34.217.64.79:8080/teams_by_year?team=South_Korea
 
 ```
     connection.query(`
@@ -203,7 +202,7 @@ http://localhost:8080/teams_by_year
 ```
 
 ## Teams by decade
-http://localhost:8080/teams_by_decade
+http://34.217.64.79:8080/teams_by_decade?team=South_Korea
 
 ```
 connection.query(`
